@@ -30,8 +30,10 @@ class VideoPlayer:
             title = video.title
             id = video.video_id
             tags = " ".join(video.tags)
-            
-            print(f"{title} ({id}) [{tags}]")
+            name = "  " + title + " (" + id + ")" +  " [" + tags + "]"
+            if id in self._flagged:
+                name += " - FLAGGED (reason: " + self._flagged[id] + ")"
+            print(name)
                 
  
     def play_video(self, video_id):
@@ -219,7 +221,10 @@ class VideoPlayer:
                     title = video.title
                     id = video.video_id
                     tags = " ".join(video.tags)
-                    print(f"  {title} ({id}) [{tags}]")
+                    name = "  " + title + " (" + id + ")" +  " [" + tags + "]"
+                    if id in self._flagged:
+                        name += " - FLAGGED (reason: " + self._flagged[id] + ")"
+                    print(name)
         else:
             print(f"Cannot show playlist {playlist_name}: Playlist does not exist")
 
@@ -298,7 +303,7 @@ class VideoPlayer:
             title = video.title
             id = video.video_id
             tags = " ".join(video.tags)
-            if search_term.lower() in title.lower():
+            if id not in self._flagged and search_term.lower() in title.lower():
                 name = "  " + str(index) + ") " + title + " (" + id + ")" +  " [" + tags + "]"
                 results.append(name)
                 valid_ids.append(id)
@@ -340,7 +345,7 @@ class VideoPlayer:
             title = video.title
             id = video.video_id
             tags = " ".join(video.tags)
-            if video_tag[0] == '#' and video_tag.lower() in tags.lower():
+            if id not in self._flagged and video_tag[0] == '#' and video_tag.lower() in tags.lower():
                 name = "  " + str(index) + ") " + title + " (" + id + ")" +  " [" + tags + "]"
                 results.append(name)
                 valid_ids.append(id)
@@ -379,6 +384,8 @@ class VideoPlayer:
             if video_id in self._flagged:
                 print("Cannot flag video: Video is already flagged")
             else:
+                if not self._currently_playing == None and video_id == self._currently_playing.video_id:
+                    self.stop_video()
                 if flag_reason == "":
                     flag_reason = "Not supplied" 
                 self._flagged[video_id] = flag_reason
@@ -391,4 +398,15 @@ class VideoPlayer:
         Args:
             video_id: The video_id to be allowed again.
         """
-        print("allow_video needs implementation")
+        next_video = self._video_library.get_video(video_id)
+        
+        if next_video == None:
+            print("Cannot remove flag from video: Video does not exist")
+        else:
+            if video_id in self._flagged:
+                self._flagged.pop(video_id)
+                title = next_video.title
+                print(f"Successfully removed flag from video: {title}")
+            else:
+                print("Cannot remove flag from video: Video is not flagged")
+        # print("allow_video needs implementation")
